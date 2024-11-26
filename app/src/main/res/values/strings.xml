@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">XyPlot</string>
+    <string name="info_txt">Enter dot amount:</string>
+    <string name="proceed">Поехали</string>
+    <string name="some_error">Invalid input, must be between 1 and 1000.</string>
+</resources>
