@@ -5,7 +5,6 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
 import android.util.AttributeSet
-import android.util.Log
 import androidx.core.content.res.ResourcesCompat
 import io.iskopasi.xyplot.R
 import io.iskopasi.xyplot.pojo.MinMaxYValue
@@ -146,8 +145,6 @@ class XyPlotView @JvmOverloads constructor(
 
             // Draw connection point
             canvas.drawCircle(newPointX, newPointY, 2f, paint)
-
-            Log.e("->>", "x3: $x3, y3: $y3")
         }
 
         canvas.drawPath(path, paint)

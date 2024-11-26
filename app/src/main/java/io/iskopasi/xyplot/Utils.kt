@@ -2,7 +2,11 @@ package io.iskopasi.xyplot
 
 import android.content.Context
 import android.content.res.Resources
+import android.graphics.Bitmap
+import android.os.Environment
 import android.util.TypedValue
+import android.view.View
+import androidx.core.view.drawToBitmap
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
@@ -15,6 +19,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
 
 // Int <-> Dp,Sp converters
 val Int.dp: Int
@@ -68,4 +74,39 @@ fun List<XyPlotPoint>.toPointEntities(): List<PointsEntity> = map {
         x = it.x?.toFloat() ?: 0f,
         y = it.y?.toFloat() ?: 0f,
     )
+}
+
+// File and bitmap utils
+fun getBitmap(view: View) = view.drawToBitmap(Bitmap.Config.ARGB_8888)
+
+//fun getBitmap2(view: View) =
+//    Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888).apply {
+//        view.draw(Canvas(this))
+//    }
+
+fun getNewFileInDownloads(ext: String): File {
+    val path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+
+    return File(path, "xyplot_${System.currentTimeMillis()}$ext")
+}
+
+fun saveIntoDownloads(bitmap: Bitmap): File {
+    val file = getNewFileInDownloads(".jpg")
+
+    FileOutputStream(file).use { targetOutputStream ->
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, targetOutputStream)
+    }
+
+    return file
+}
+
+fun screenshotIntoDownloads(view: View, onCompleted: (String) -> Unit) {
+    try {
+        val bitmap = getBitmap(view)
+        val file = saveIntoDownloads(bitmap)
+
+        onCompleted("Saved into: ${file.path}")
+    } catch (ex: Exception) {
+        onCompleted("Err: ${ex.message}")
+    }
 }
