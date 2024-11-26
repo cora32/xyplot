@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
 import android.util.AttributeSet
+import android.util.Log
 import androidx.core.content.res.ResourcesCompat
 import io.iskopasi.xyplot.R
 import io.iskopasi.xyplot.pojo.MinMaxYValue
@@ -26,6 +27,14 @@ class XyPlotView @JvmOverloads constructor(
     var data: XyPlotValue = XyPlotValue()
         set(value) {
             field = value
+//            field = XyPlotValue(
+//                listOf(
+//                    PointsEntity(x = 0f, y= 0f, ),
+//                    PointsEntity(x = 1f, y= 5f, ),
+//                    PointsEntity(x = 2f, y= 0f, ),
+//                ),
+//                MinMaxYValue(0f, 5f)
+//            )
 
             recalculateFactors()
             invalidate()
@@ -66,6 +75,7 @@ class XyPlotView @JvmOverloads constructor(
         initialXOffset = firstX
         xFactor = width / abs(lastX)
         yFactor = (height / 2f) / (abs(data.minMaxY.max) + abs(data.minMaxY.min))
+        yCenter = height / 2f
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -78,8 +88,12 @@ class XyPlotView @JvmOverloads constructor(
 
         // If view size changed after data was set, recalculate factors again
         recalculateFactors()
+    }
 
-        yCenter = height / 2f
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+
+        recalculateFactors()
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -132,6 +146,8 @@ class XyPlotView @JvmOverloads constructor(
 
             // Draw connection point
             canvas.drawCircle(newPointX, newPointY, 2f, paint)
+
+            Log.e("->>", "x3: $x3, y3: $y3")
         }
 
         canvas.drawPath(path, paint)
