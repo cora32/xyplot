@@ -2,6 +2,7 @@ package io.iskopasi.xyplot.models
 
 import android.app.Application
 import android.view.View
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.iskopasi.xyplot.IoDispatcher
@@ -21,7 +22,8 @@ class ResultModel @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineContext,
     @MainDispatcher private val mainDispatcher: CoroutineContext
 ) : BaseViewModel(context) {
-    val data: MutableLiveData<XyPlotValue> = MutableLiveData(XyPlotValue())
+    private val _dataState: MutableLiveData<XyPlotValue> = MutableLiveData(XyPlotValue())
+    val dataState: LiveData<XyPlotValue> = _dataState
 
     init {
         // Fetch result from DB and update LiveData
@@ -31,7 +33,7 @@ class ResultModel @Inject constructor(
                 val minMax = repository.getMinMax()
 
                 withContext(mainDispatcher) {
-                    data.value = XyPlotValue(pointList, minMax)
+                    _dataState.value = XyPlotValue(pointList, minMax)
                 }
             }
         }

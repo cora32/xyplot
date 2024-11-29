@@ -9,10 +9,13 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
 
 open class BaseViewModel(context: Application) : AndroidViewModel(context) {
-    val messageFlow = MutableSharedFlow<MessageObject?>()
+    private val _messageFlow = MutableSharedFlow<MessageObject?>()
+    val messageFlow: SharedFlow<MessageObject?> = _messageFlow
+
     private val coroutineExceptionHandler = CoroutineExceptionHandler { context, exception ->
         viewModelScope.launch {
             emitMessage(
@@ -25,7 +28,7 @@ open class BaseViewModel(context: Application) : AndroidViewModel(context) {
     }
 
     private fun emitMessage(message: MessageObject) = viewModelScope.launch {
-        messageFlow.emit(message)
+        _messageFlow.emit(message)
     }
 
     protected fun info(message: String) = viewModelScope.launch {

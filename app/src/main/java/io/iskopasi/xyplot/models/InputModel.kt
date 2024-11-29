@@ -9,6 +9,7 @@ import io.iskopasi.xyplot.MainDispatcher
 import io.iskopasi.xyplot.activities.ResultActivity
 import io.iskopasi.xyplot.api.Repository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -21,11 +22,12 @@ class InputModel @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineContext,
     @MainDispatcher private val mainDispatcher: CoroutineContext
 ) : BaseViewModel(context) {
-    val loadingFlow = MutableStateFlow<Boolean>(false)
+    private val _loadingFlow = MutableStateFlow<Boolean>(false)
+    val loadingFlow: StateFlow<Boolean> = _loadingFlow
 
     fun requestsDots(dotAmount: Int) = bg {
         // Set loading animation
-        loadingFlow.emit(true)
+        _loadingFlow.emit(true)
 
         // Request dots
         withContext(ioDispatcher) {
@@ -40,7 +42,7 @@ class InputModel @Inject constructor(
     }.invokeOnCompletion {
         // Reset loading state regardless of exceptions
         viewModelScope.launch {
-            loadingFlow.emit(false)
+            _loadingFlow.emit(false)
         }
     }
 

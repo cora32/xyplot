@@ -90,7 +90,7 @@ class ResultActivity : AppCompatActivity() {
         }
 
         // Waiting till data is fetched from DB and displaying that data
-        model.data.observe(this) {
+        model.dataState.observe(this) {
             adapter.data = it.data
             binding.xyPlot.data = it
         }
