@@ -10,7 +10,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
 import io.iskopasi.xyplot.R
@@ -64,13 +66,16 @@ class ResultActivity : AppCompatActivity() {
         binding.dotsRv.adapter = adapter
 
         lifecycleScope.launch {
-            // Show toast with error if any error occurred
-            model.messageFlow.collect { msg ->
-                if (msg != null) {
-                    if (msg.type == XyPlotMessageType.Info) {
-                        showInfo(msg.data)
-                    } else {
-                        showError(msg.data)
+            // Re-collect flow on STARTED state after rotations
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Show toast with error if any error occurred
+                model.messageFlow.collect { msg ->
+                    if (msg != null) {
+                        if (msg.type == XyPlotMessageType.Info) {
+                            showInfo(msg.data)
+                        } else {
+                            showError(msg.data)
+                        }
                     }
                 }
             }

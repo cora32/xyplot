@@ -23,7 +23,7 @@ class InputModel @Inject constructor(
 ) : BaseViewModel(context) {
     val loadingFlow = MutableStateFlow<Boolean>(false)
 
-    fun requestsDots(dotAmount: Int) = viewModelScope.launch(coroutineExceptionHandler) {
+    fun requestsDots(dotAmount: Int) = bg {
         // Set loading animation
         loadingFlow.emit(true)
 
@@ -35,10 +35,10 @@ class InputModel @Inject constructor(
             repository.rewriteResult(result)
 
             // and send event that should launch new activity that will show the result
-//            activityLaunchFlow.emit(XyPlotEvent.SHOW_RESULT)
             startResultActivity()
         }
     }.invokeOnCompletion {
+        // Reset loading state regardless of exceptions
         viewModelScope.launch {
             loadingFlow.emit(false)
         }
@@ -46,7 +46,7 @@ class InputModel @Inject constructor(
 
     fun validate(dotAmount: Int?): Boolean = dotAmount in 1..1000
 
-    private fun startResultActivity() = viewModelScope.launch {
+    private fun startResultActivity() = bg {
         val context = getApplication<Application>()
         context.startActivity(Intent(context, ResultActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK

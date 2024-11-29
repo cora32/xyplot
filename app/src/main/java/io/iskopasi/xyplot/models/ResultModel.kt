@@ -3,16 +3,12 @@ package io.iskopasi.xyplot.models
 import android.app.Application
 import android.view.View
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.iskopasi.xyplot.IoDispatcher
 import io.iskopasi.xyplot.MainDispatcher
 import io.iskopasi.xyplot.api.Repository
 import io.iskopasi.xyplot.getScreenShot
-import io.iskopasi.xyplot.pojo.MessageObject
-import io.iskopasi.xyplot.pojo.XyPlotMessageType
 import io.iskopasi.xyplot.views.XyPlotValue
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
@@ -29,7 +25,7 @@ class ResultModel @Inject constructor(
 
     init {
         // Fetch result from DB and update LiveData
-        viewModelScope.launch(coroutineExceptionHandler) {
+        bg {
             withContext(ioDispatcher) {
                 val pointList = repository.getLatestData()
                 val minMax = repository.getMinMax()
@@ -41,7 +37,7 @@ class ResultModel @Inject constructor(
         }
     }
 
-    fun saveScreenshot(view: View) = viewModelScope.launch(coroutineExceptionHandler) {
+    fun saveScreenshot(view: View) = bg {
         // View -> bitmap
         val bitmap = getScreenShot(view)
 
@@ -49,7 +45,7 @@ class ResultModel @Inject constructor(
             // Save screenshot
             repository.saveScreenshot(bitmap)
 
-            emitMessage(MessageObject(XyPlotMessageType.Info, "Saved"))
+            info("Saved")
         }
     }
 }

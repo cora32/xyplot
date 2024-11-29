@@ -6,14 +6,16 @@ import androidx.lifecycle.viewModelScope
 import io.iskopasi.xyplot.pojo.MessageObject
 import io.iskopasi.xyplot.pojo.XyPlotMessageType
 import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 
 open class BaseViewModel(context: Application) : AndroidViewModel(context) {
-    val messageFlow = MutableStateFlow<MessageObject?>(null)
-    val coroutineExceptionHandler = CoroutineExceptionHandler { context, exception ->
+    val messageFlow = MutableSharedFlow<MessageObject?>()
+    private val coroutineExceptionHandler = CoroutineExceptionHandler { context, exception ->
         viewModelScope.launch {
-            messageFlow.emit(
+            emitMessage(
                 MessageObject(
                     XyPlotMessageType.Error,
                     "Error -> $exception"
@@ -22,7 +24,21 @@ open class BaseViewModel(context: Application) : AndroidViewModel(context) {
         }
     }
 
-    protected fun emitMessage(message: MessageObject) = viewModelScope.launch {
+    private fun emitMessage(message: MessageObject) = viewModelScope.launch {
         messageFlow.emit(message)
     }
+
+    protected fun info(message: String) = viewModelScope.launch {
+        emitMessage(MessageObject(XyPlotMessageType.Info, message))
+    }
+
+    protected fun error(message: String) = viewModelScope.launch {
+        emitMessage(MessageObject(XyPlotMessageType.Error, message))
+    }
+
+    // Runs block in a default coroutine and handle all uncaught exceptions
+    protected fun bg(block: suspend (CoroutineScope) -> Unit): Job =
+        viewModelScope.launch(coroutineExceptionHandler) {
+            block(this)
+        }
 }

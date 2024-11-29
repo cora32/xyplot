@@ -4,12 +4,13 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import io.iskopasi.xyplot.R
 import io.iskopasi.xyplot.databinding.ActivityMainBinding
 import io.iskopasi.xyplot.models.InputModel
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -18,8 +19,6 @@ class MainActivity : AppCompatActivity() {
         ActivityMainBinding.inflate(layoutInflater)
     }
     private val model: InputModel by viewModels()
-    private lateinit var messageFlowJob: Job
-    private lateinit var loadingFlow: Job
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,16 +26,20 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         lifecycleScope.launch {
-            // Show toast with error if any error occurred
-            model.messageFlow.collect { msg ->
-                if (msg != null) showError(msg.data)
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Show toast with error if any error occurred
+                model.messageFlow.collect { msg ->
+                    if (msg != null) showError(msg.data)
+                }
             }
         }
 
         lifecycleScope.launch {
-            // Reacts to data fetch start
-            model.loadingFlow.collect { isLoading ->
-                binding.inputBtn.isEnabled = isLoading == false
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Reacts to data fetch start
+                model.loadingFlow.collect { isLoading ->
+                    binding.inputBtn.isEnabled = isLoading == false
+                }
             }
         }
 
