@@ -3,6 +3,8 @@ package io.iskopasi.xyplot.models
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import io.iskopasi.xyplot.IoDispatcher
+import io.iskopasi.xyplot.MainDispatcher
 import io.iskopasi.xyplot.pojo.MessageObject
 import io.iskopasi.xyplot.pojo.XyPlotMessageType
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -11,13 +13,18 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
+import kotlin.coroutines.CoroutineContext
 
-open class BaseViewModel(context: Application) : AndroidViewModel(context) {
+open class BaseViewModel(
+    context: Application,
+    @IoDispatcher private val ioDispatcher: CoroutineContext,
+    @MainDispatcher private val mainDispatcher: CoroutineContext
+) : AndroidViewModel(context) {
     private val _messageFlow = MutableSharedFlow<MessageObject?>()
     val messageFlow: SharedFlow<MessageObject?> = _messageFlow
 
     private val coroutineExceptionHandler = CoroutineExceptionHandler { context, exception ->
-        viewModelScope.launch {
+        viewModelScope.launch(ioDispatcher) {
             emitMessage(
                 MessageObject(
                     XyPlotMessageType.Error,

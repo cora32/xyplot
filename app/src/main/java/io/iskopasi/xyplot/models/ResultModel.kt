@@ -21,7 +21,11 @@ class ResultModel @Inject constructor(
     private val repository: Repository,
     @IoDispatcher private val ioDispatcher: CoroutineContext,
     @MainDispatcher private val mainDispatcher: CoroutineContext
-) : BaseViewModel(context) {
+) : BaseViewModel(
+    context,
+    ioDispatcher = ioDispatcher,
+    mainDispatcher = mainDispatcher
+) {
     private val _dataState: MutableLiveData<XyPlotValue> = MutableLiveData(XyPlotValue())
     val dataState: LiveData<XyPlotValue> = _dataState
 

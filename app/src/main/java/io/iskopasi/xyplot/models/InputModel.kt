@@ -21,7 +21,11 @@ class InputModel @Inject constructor(
     private val repository: Repository,
     @IoDispatcher private val ioDispatcher: CoroutineContext,
     @MainDispatcher private val mainDispatcher: CoroutineContext
-) : BaseViewModel(context) {
+) : BaseViewModel(
+    context,
+    ioDispatcher = ioDispatcher,
+    mainDispatcher = mainDispatcher
+) {
     private val _loadingFlow = MutableStateFlow<Boolean>(false)
     val loadingFlow: StateFlow<Boolean> = _loadingFlow
 
