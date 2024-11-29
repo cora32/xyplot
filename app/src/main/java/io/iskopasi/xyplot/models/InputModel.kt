@@ -57,5 +57,5 @@ class InputModel @Inject constructor(
         }
     }
 
-    fun validate(dotAmount: Int?): Boolean = dotAmount in 0..1000
+    fun validate(dotAmount: Int?): Boolean = dotAmount in 1..1000
 }
