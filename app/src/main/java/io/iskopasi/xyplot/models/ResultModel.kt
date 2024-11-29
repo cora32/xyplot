@@ -2,7 +2,6 @@ package io.iskopasi.xyplot.models
 
 import android.app.Application
 import android.view.View
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -13,8 +12,6 @@ import io.iskopasi.xyplot.getScreenShot
 import io.iskopasi.xyplot.pojo.MessageObject
 import io.iskopasi.xyplot.pojo.XyPlotMessageType
 import io.iskopasi.xyplot.views.XyPlotValue
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -27,19 +24,8 @@ class ResultModel @Inject constructor(
     private val repository: Repository,
     @IoDispatcher private val ioDispatcher: CoroutineContext,
     @MainDispatcher private val mainDispatcher: CoroutineContext
-) : AndroidViewModel(context) {
-    val messageFlow = MutableStateFlow<MessageObject?>(null)
+) : BaseViewModel(context) {
     val data: MutableLiveData<XyPlotValue> = MutableLiveData(XyPlotValue())
-    val coroutineExceptionHandler = CoroutineExceptionHandler { context, exception ->
-        viewModelScope.launch {
-            messageFlow.emit(
-                MessageObject(
-                    XyPlotMessageType.Error,
-                    "Error -> $exception"
-                )
-            )
-        }
-    }
 
     init {
         // Fetch result from DB and update LiveData
@@ -63,7 +49,7 @@ class ResultModel @Inject constructor(
             // Save screenshot
             repository.saveScreenshot(bitmap)
 
-            messageFlow.emit(MessageObject(XyPlotMessageType.Info, "Saved"))
+            emitMessage(MessageObject(XyPlotMessageType.Info, "Saved"))
         }
     }
 }

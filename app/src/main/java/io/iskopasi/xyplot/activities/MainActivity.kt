@@ -1,6 +1,5 @@
 package io.iskopasi.xyplot.activities
 
-import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.viewModels
@@ -10,7 +9,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.iskopasi.xyplot.R
 import io.iskopasi.xyplot.databinding.ActivityMainBinding
 import io.iskopasi.xyplot.models.InputModel
-import io.iskopasi.xyplot.models.XyPlotEvent
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -19,6 +18,8 @@ class MainActivity : AppCompatActivity() {
         ActivityMainBinding.inflate(layoutInflater)
     }
     private val model: InputModel by viewModels()
+    private lateinit var messageFlowJob: Job
+    private lateinit var loadingFlow: Job
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,17 +30,6 @@ class MainActivity : AppCompatActivity() {
             // Show toast with error if any error occurred
             model.messageFlow.collect { msg ->
                 if (msg != null) showError(msg.data)
-            }
-        }
-
-        lifecycleScope.launch {
-            // Launch ResultActivity if data fetched successfully
-            model.activityLaunchFlow.collect { event ->
-                if (event == XyPlotEvent.SHOW_RESULT) {
-                    startActivity(Intent(this@MainActivity, ResultActivity::class.java).apply {
-                        flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
-                    })
-                }
             }
         }
 

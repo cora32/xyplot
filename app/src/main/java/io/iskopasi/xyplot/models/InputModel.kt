@@ -1,25 +1,18 @@
 package io.iskopasi.xyplot.models
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import android.content.Intent
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.iskopasi.xyplot.IoDispatcher
 import io.iskopasi.xyplot.MainDispatcher
+import io.iskopasi.xyplot.activities.ResultActivity
 import io.iskopasi.xyplot.api.Repository
-import io.iskopasi.xyplot.pojo.MessageObject
-import io.iskopasi.xyplot.pojo.XyPlotMessageType
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
-
-enum class XyPlotEvent {
-    IDLE,
-    SHOW_RESULT
-}
 
 @HiltViewModel
 class InputModel @Inject constructor(
@@ -27,20 +20,8 @@ class InputModel @Inject constructor(
     private val repository: Repository,
     @IoDispatcher private val ioDispatcher: CoroutineContext,
     @MainDispatcher private val mainDispatcher: CoroutineContext
-) : AndroidViewModel(context) {
-    val messageFlow = MutableStateFlow<MessageObject?>(null)
+) : BaseViewModel(context) {
     val loadingFlow = MutableStateFlow<Boolean>(false)
-    val activityLaunchFlow = MutableStateFlow<XyPlotEvent>(XyPlotEvent.IDLE)
-    val coroutineExceptionHandler = CoroutineExceptionHandler { context, exception ->
-        viewModelScope.launch(mainDispatcher) {
-            messageFlow.emit(
-                MessageObject(
-                    XyPlotMessageType.Error,
-                    "Error -> $exception"
-                )
-            )
-        }
-    }
 
     fun requestsDots(dotAmount: Int) = viewModelScope.launch(coroutineExceptionHandler) {
         // Set loading animation
@@ -54,7 +35,8 @@ class InputModel @Inject constructor(
             repository.rewriteResult(result)
 
             // and send event that should launch new activity that will show the result
-            activityLaunchFlow.emit(XyPlotEvent.SHOW_RESULT)
+//            activityLaunchFlow.emit(XyPlotEvent.SHOW_RESULT)
+            startResultActivity()
         }
     }.invokeOnCompletion {
         viewModelScope.launch {
@@ -63,4 +45,11 @@ class InputModel @Inject constructor(
     }
 
     fun validate(dotAmount: Int?): Boolean = dotAmount in 1..1000
+
+    private fun startResultActivity() = viewModelScope.launch {
+        val context = getApplication<Application>()
+        context.startActivity(Intent(context, ResultActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        })
+    }
 }
