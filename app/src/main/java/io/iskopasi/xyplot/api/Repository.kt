@@ -18,7 +18,6 @@ class Repository @Inject constructor(
     suspend fun requestsDots(dotsCount: Int): List<XyPlotPoint> =
         restApi.requestsDots(dotsCount).body()!!.points
 
-
     // Clears old data and saves the new
     suspend fun rewriteResult(listOfPoints: List<XyPlotPoint>) {
         dao.clear()
@@ -26,7 +25,8 @@ class Repository @Inject constructor(
     }
 
     // Fetch data from DB. The data is sorted by x ASC.
-    suspend fun getLatestData(): List<PointsEntity> = dao.getAll()
+    suspend fun getLatestData(): List<PointsEntity> =
+        dao.getAll()
 
     // Get min and max values.
     suspend fun getMinMax(): MinMaxYValue = dao.getMinMax()

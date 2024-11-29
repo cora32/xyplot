@@ -2,7 +2,6 @@ package io.iskopasi.xyplot.models
 
 import android.app.Application
 import android.content.Intent
-import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.iskopasi.xyplot.IoDispatcher
 import io.iskopasi.xyplot.MainDispatcher
@@ -10,8 +9,6 @@ import io.iskopasi.xyplot.activities.ResultActivity
 import io.iskopasi.xyplot.api.Repository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 
@@ -34,7 +31,7 @@ class InputModel @Inject constructor(
         _loadingFlow.emit(true)
 
         // Request dots
-        withContext(ioDispatcher) {
+        try {
             val result = repository.requestsDots(dotAmount)
 
             // Save data to DB to avoid Intent payload limit
@@ -42,12 +39,12 @@ class InputModel @Inject constructor(
 
             // and send event that should launch new activity that will show the result
             startResultActivity()
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+            error("Network error: $ex")
         }
-    }.invokeOnCompletion {
-        // Reset loading state regardless of exceptions
-        viewModelScope.launch {
-            _loadingFlow.emit(false)
-        }
+
+        _loadingFlow.emit(false)
     }
 
     fun validate(dotAmount: Int?): Boolean = dotAmount in 1..1000

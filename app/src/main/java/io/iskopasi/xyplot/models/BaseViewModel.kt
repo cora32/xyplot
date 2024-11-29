@@ -7,7 +7,6 @@ import io.iskopasi.xyplot.IoDispatcher
 import io.iskopasi.xyplot.MainDispatcher
 import io.iskopasi.xyplot.pojo.MessageObject
 import io.iskopasi.xyplot.pojo.XyPlotMessageType
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -23,17 +22,6 @@ open class BaseViewModel(
     private val _messageFlow = MutableSharedFlow<MessageObject?>()
     val messageFlow: SharedFlow<MessageObject?> = _messageFlow
 
-    private val coroutineExceptionHandler = CoroutineExceptionHandler { context, exception ->
-        viewModelScope.launch(ioDispatcher) {
-            emitMessage(
-                MessageObject(
-                    XyPlotMessageType.Error,
-                    "Error -> $exception"
-                )
-            )
-        }
-    }
-
     private fun emitMessage(message: MessageObject) = viewModelScope.launch {
         _messageFlow.emit(message)
     }
@@ -48,7 +36,7 @@ open class BaseViewModel(
 
     // Runs block in a default coroutine and handle all uncaught exceptions
     protected fun bg(block: suspend (CoroutineScope) -> Unit): Job =
-        viewModelScope.launch(coroutineExceptionHandler) {
+        viewModelScope.launch(ioDispatcher) {
             block(this)
         }
 }

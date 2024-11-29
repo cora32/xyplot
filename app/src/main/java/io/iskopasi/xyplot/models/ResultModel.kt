@@ -47,11 +47,13 @@ class ResultModel @Inject constructor(
         // View -> bitmap
         val bitmap = getScreenShot(view)
 
-        withContext(ioDispatcher) {
-            // Save screenshot
+        // Save screenshot
+        try {
             repository.saveScreenshot(bitmap)
-
             info("Saved")
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+            error("Error saving")
         }
     }
 }
