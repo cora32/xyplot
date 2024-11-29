@@ -77,12 +77,7 @@ fun List<XyPlotPoint>.toPointEntities(): List<PointsEntity> = map {
 }
 
 // File and bitmap utils
-fun getBitmap(view: View) = view.drawToBitmap(Bitmap.Config.ARGB_8888)
-
-//fun getBitmap2(view: View) =
-//    Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888).apply {
-//        view.draw(Canvas(this))
-//    }
+fun getScreenShot(view: View) = view.drawToBitmap(Bitmap.Config.ARGB_8888)
 
 fun getNewFileInDownloads(ext: String): File {
     val path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
@@ -98,15 +93,4 @@ fun saveIntoDownloads(bitmap: Bitmap): File {
     }
 
     return file
-}
-
-fun screenshotIntoDownloads(view: View, onCompleted: (String) -> Unit) {
-    try {
-        val bitmap = getBitmap(view)
-        val file = saveIntoDownloads(bitmap)
-
-        onCompleted("Saved into: ${file.path}")
-    } catch (ex: Exception) {
-        onCompleted("Err: ${ex.message}")
-    }
 }

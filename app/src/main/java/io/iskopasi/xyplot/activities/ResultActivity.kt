@@ -16,7 +16,8 @@ import io.iskopasi.xyplot.R
 import io.iskopasi.xyplot.adapters.DotsAdapter
 import io.iskopasi.xyplot.databinding.ActivityResultBinding
 import io.iskopasi.xyplot.models.ResultModel
-import io.iskopasi.xyplot.screenshotIntoDownloads
+import io.iskopasi.xyplot.pojo.XyPlotMessageType
+import io.iskopasi.xyplot.ui
 import kotlin.getValue
 
 @AndroidEntryPoint
@@ -29,9 +30,9 @@ class ResultActivity : AppCompatActivity() {
         ActivityResultContracts.RequestMultiplePermissions()
     ) { resultMap ->
         if (resultMap.values.all { it }) {
-            saveScreenshot(binding.xyPlot)
+            model.saveScreenshot(binding.xyPlot)
         } else {
-            onResult(getString(R.string.permission_denied))
+            showError(getString(R.string.permission_denied))
         }
     }
 
@@ -42,21 +43,12 @@ class ResultActivity : AppCompatActivity() {
     // Checks permission before saving screenshot
     private fun checkPermissionAndSaveScreenshot(view: View) {
         when (requestPermissionsL33()) {
-            true -> saveScreenshot(view)
+            true -> model.saveScreenshot(view)
             else -> launcher.launch(
                 arrayOf(
                     Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 )
             )
-        }
-    }
-
-    // Creates file and saves bitmap into the file
-    private fun saveScreenshot(view: View) {
-        // Saving screenshot into Downloads folder
-        screenshotIntoDownloads(binding.xyPlot) { str ->
-            // Displaying toast with result msg
-            onResult(str)
         }
     }
 
@@ -70,11 +62,24 @@ class ResultActivity : AppCompatActivity() {
         val adapter = DotsAdapter()
         binding.dotsRv.adapter = adapter
 
+        ui {
+            // Show toast with error if any error occurred
+            model.messageFlow.collect { msg ->
+                if (msg != null) {
+                    if (msg.type == XyPlotMessageType.Info) {
+                        showInfo(msg.data)
+                    } else {
+                        showError(msg.data)
+                    }
+                }
+            }
+        }
+
         binding.fab.setOnClickListener { view ->
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-                checkPermissionAndSaveScreenshot(view)
+                checkPermissionAndSaveScreenshot(binding.xyPlot)
             } else {
-                saveScreenshot(view)
+                model.saveScreenshot(binding.xyPlot)
             }
         }
 
@@ -85,7 +90,11 @@ class ResultActivity : AppCompatActivity() {
         }
     }
 
-    private fun onResult(str: String) {
-        Toast.makeText(this, str, Toast.LENGTH_SHORT).show()
+    private fun showInfo(str: String) {
+        Toast.makeText(this, getString(R.string.info, str), Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showError(str: String) {
+        Toast.makeText(this, getString(R.string.error, str), Toast.LENGTH_SHORT).show()
     }
 }

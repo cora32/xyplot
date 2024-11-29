@@ -1,5 +1,6 @@
 package io.iskopasi.xyplot.api
 
+import android.graphics.Bitmap
 import io.iskopasi.xyplot.asError
 import io.iskopasi.xyplot.asOk
 import io.iskopasi.xyplot.pojo.MinMaxYValue
@@ -7,8 +8,10 @@ import io.iskopasi.xyplot.pojo.XyPlotPoint
 import io.iskopasi.xyplot.pojo.XyPlotResult
 import io.iskopasi.xyplot.room.PointsDao
 import io.iskopasi.xyplot.room.PointsEntity
+import io.iskopasi.xyplot.saveIntoDownloads
 import io.iskopasi.xyplot.toPointEntities
 import retrofit2.HttpException
+import java.io.File
 import javax.inject.Inject
 
 class Repository @Inject constructor(
@@ -45,5 +48,16 @@ class Repository @Inject constructor(
 
     // Get min and max values.
     fun getMinMax(): MinMaxYValue = dao.getMinMax()
+
+    // Creates file and saves bitmap into the file
+    fun saveScreenshot(bitmap: Bitmap): XyPlotResult<File> {
+        // Saving screenshot into Downloads folder
+        return try {
+            saveIntoDownloads(bitmap).asOk()
+        } catch (e: Throwable) {
+            e.printStackTrace()
+            "Cannot save screenshot: ${e.message}".asError()
+        }
+    }
 }
 

@@ -1,7 +1,6 @@
 package io.iskopasi.xyplot.models
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -38,7 +37,6 @@ class InputModel @Inject constructor(
         // Parse response
         when (result.status) {
             Status.OK -> {
-                Log.e("->>", "status: ${result.status}")
                 // Save data to DB to avoid Intent payload limit
                 repository.rewriteResult(result.data!!)
 
