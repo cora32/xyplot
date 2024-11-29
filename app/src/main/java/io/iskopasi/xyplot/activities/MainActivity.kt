@@ -5,12 +5,13 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.iskopasi.xyplot.R
 import io.iskopasi.xyplot.databinding.ActivityMainBinding
 import io.iskopasi.xyplot.models.InputModel
 import io.iskopasi.xyplot.models.XyPlotEvent
-import io.iskopasi.xyplot.ui
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -24,14 +25,14 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(binding.root)
 
-        ui {
+        lifecycleScope.launch {
             // Show toast with error if any error occurred
-            model.errorFlow.collect { error ->
-                if (error != null) showError(error)
+            model.messageFlow.collect { msg ->
+                if (msg != null) showError(msg.data)
             }
         }
 
-        ui {
+        lifecycleScope.launch {
             // Launch ResultActivity if data fetched successfully
             model.activityLaunchFlow.collect { event ->
                 if (event == XyPlotEvent.SHOW_RESULT) {
@@ -42,9 +43,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Reacts to data fetch start
-        model.isLoadingValue.observe(this) {
-            binding.inputBtn.isEnabled = it == false
+        lifecycleScope.launch {
+            // Reacts to data fetch start
+            model.loadingFlow.collect { isLoading ->
+                binding.inputBtn.isEnabled = isLoading == false
+            }
         }
 
         binding.inputBtn.setOnClickListener {

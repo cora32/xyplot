@@ -4,64 +4,66 @@ import android.app.Application
 import android.view.View
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.iskopasi.xyplot.IoDispatcher
+import io.iskopasi.xyplot.MainDispatcher
 import io.iskopasi.xyplot.api.Repository
-import io.iskopasi.xyplot.bg
 import io.iskopasi.xyplot.getScreenShot
 import io.iskopasi.xyplot.pojo.MessageObject
-import io.iskopasi.xyplot.pojo.Status
 import io.iskopasi.xyplot.pojo.XyPlotMessageType
-import io.iskopasi.xyplot.ui
 import io.iskopasi.xyplot.views.XyPlotValue
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import kotlin.coroutines.CoroutineContext
 
 
 @HiltViewModel
 class ResultModel @Inject constructor(
     context: Application,
-    private val repository: Repository
+    private val repository: Repository,
+    @IoDispatcher private val ioDispatcher: CoroutineContext,
+    @MainDispatcher private val mainDispatcher: CoroutineContext
 ) : AndroidViewModel(context) {
     val messageFlow = MutableStateFlow<MessageObject?>(null)
     val data: MutableLiveData<XyPlotValue> = MutableLiveData(XyPlotValue())
+    val coroutineExceptionHandler = CoroutineExceptionHandler { context, exception ->
+        viewModelScope.launch {
+            messageFlow.emit(
+                MessageObject(
+                    XyPlotMessageType.Error,
+                    "Error -> $exception"
+                )
+            )
+        }
+    }
 
     init {
         // Fetch result from DB and update LiveData
-        bg {
-            val pointList = repository.getLatestData()
-            val minMax = repository.getMinMax()
+        viewModelScope.launch(coroutineExceptionHandler) {
+            withContext(ioDispatcher) {
+                val pointList = repository.getLatestData()
+                val minMax = repository.getMinMax()
 
-            ui {
-                data.value = XyPlotValue(pointList, minMax)
+                withContext(mainDispatcher) {
+                    data.value = XyPlotValue(pointList, minMax)
+                }
             }
         }
     }
 
-    fun saveScreenshot(view: View) {
+    fun saveScreenshot(view: View) = viewModelScope.launch(coroutineExceptionHandler) {
         // View -> bitmap
         val bitmap = getScreenShot(view)
 
-        bg {
+        withContext(ioDispatcher) {
             // Save screenshot
-            val result = repository.saveScreenshot(bitmap)
+            repository.saveScreenshot(bitmap)
 
-            // Parse response
-            when (result.status) {
-                Status.OK -> {
-                    messageFlow.emit(MessageObject(XyPlotMessageType.Info, "Saved"))
-                }
-
-                Status.Error -> {
-                    messageFlow.emit(
-                        MessageObject(
-                            XyPlotMessageType.Info,
-                            "Error -> ${result.error}"
-                        )
-                    )
-                }
-
-                Status.Unknown -> {}
-            }
+            messageFlow.emit(MessageObject(XyPlotMessageType.Info, "Saved"))
         }
     }
 }

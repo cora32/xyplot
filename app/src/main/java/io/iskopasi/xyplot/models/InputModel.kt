@@ -2,14 +2,19 @@ package io.iskopasi.xyplot.models
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.iskopasi.xyplot.IoDispatcher
+import io.iskopasi.xyplot.MainDispatcher
 import io.iskopasi.xyplot.api.Repository
-import io.iskopasi.xyplot.bg
-import io.iskopasi.xyplot.pojo.Status
-import io.iskopasi.xyplot.ui
+import io.iskopasi.xyplot.pojo.MessageObject
+import io.iskopasi.xyplot.pojo.XyPlotMessageType
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import kotlin.coroutines.CoroutineContext
 
 enum class XyPlotEvent {
     IDLE,
@@ -20,40 +25,40 @@ enum class XyPlotEvent {
 class InputModel @Inject constructor(
     context: Application,
     private val repository: Repository,
+    @IoDispatcher private val ioDispatcher: CoroutineContext,
+    @MainDispatcher private val mainDispatcher: CoroutineContext
 ) : AndroidViewModel(context) {
-    val errorFlow = MutableStateFlow<String?>(null)
+    val messageFlow = MutableStateFlow<MessageObject?>(null)
+    val loadingFlow = MutableStateFlow<Boolean>(false)
     val activityLaunchFlow = MutableStateFlow<XyPlotEvent>(XyPlotEvent.IDLE)
-    val isLoadingValue: MutableLiveData<Boolean> = MutableLiveData<Boolean>(false)
-
-    fun requestsDots(dotAmount: Int) = bg {
-        // Set loading animation
-        ui {
-            isLoadingValue.value = true
+    val coroutineExceptionHandler = CoroutineExceptionHandler { context, exception ->
+        viewModelScope.launch(mainDispatcher) {
+            messageFlow.emit(
+                MessageObject(
+                    XyPlotMessageType.Error,
+                    "Error -> $exception"
+                )
+            )
         }
+    }
+
+    fun requestsDots(dotAmount: Int) = viewModelScope.launch(coroutineExceptionHandler) {
+        // Set loading animation
+        loadingFlow.emit(true)
 
         // Request dots
-        val result = repository.requestsDots(dotAmount)
+        withContext(ioDispatcher) {
+            val result = repository.requestsDots(dotAmount)
 
-        // Parse response
-        when (result.status) {
-            Status.OK -> {
-                // Save data to DB to avoid Intent payload limit
-                repository.rewriteResult(result.data!!)
+            // Save data to DB to avoid Intent payload limit
+            repository.rewriteResult(result)
 
-                // and send event that should launch new activity that will show the result
-                activityLaunchFlow.emit(XyPlotEvent.SHOW_RESULT)
-            }
-
-            Status.Error -> {
-                errorFlow.emit("Error -> ${result.error}")
-            }
-
-            Status.Unknown -> {}
+            // and send event that should launch new activity that will show the result
+            activityLaunchFlow.emit(XyPlotEvent.SHOW_RESULT)
         }
-
-        ui {
-            // Remove loading animation
-            isLoadingValue.value = false
+    }.invokeOnCompletion {
+        viewModelScope.launch {
+            loadingFlow.emit(false)
         }
     }
 

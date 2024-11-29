@@ -10,6 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
 import io.iskopasi.xyplot.R
@@ -17,7 +18,7 @@ import io.iskopasi.xyplot.adapters.DotsAdapter
 import io.iskopasi.xyplot.databinding.ActivityResultBinding
 import io.iskopasi.xyplot.models.ResultModel
 import io.iskopasi.xyplot.pojo.XyPlotMessageType
-import io.iskopasi.xyplot.ui
+import kotlinx.coroutines.launch
 import kotlin.getValue
 
 @AndroidEntryPoint
@@ -62,7 +63,7 @@ class ResultActivity : AppCompatActivity() {
         val adapter = DotsAdapter()
         binding.dotsRv.adapter = adapter
 
-        ui {
+        lifecycleScope.launch {
             // Show toast with error if any error occurred
             model.messageFlow.collect { msg ->
                 if (msg != null) {
