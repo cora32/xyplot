@@ -32,13 +32,11 @@ class ResultModel @Inject constructor(
     init {
         // Fetch result from DB and update LiveData
         bg {
-            withContext(ioDispatcher) {
-                val pointList = repository.getLatestData()
-                val minMax = repository.getMinMax()
+            val pointList = repository.getLatestData()
+            val minMax = repository.getMinMax()
 
-                withContext(mainDispatcher) {
-                    _dataState.value = XyPlotValue(pointList, minMax)
-                }
+            withContext(mainDispatcher) {
+                _dataState.value = XyPlotValue(pointList, minMax)
             }
         }
     }
